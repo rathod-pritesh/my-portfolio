@@ -76,17 +76,56 @@
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particles);
 
+    const waveGroup = new THREE.Group();
+    scene.add(waveGroup);
+
+    const waveColors = [0x8b5cf6, 0x22d3ee, 0xec4899];
+
+    for (let i = 0; i < 4; i++) {
+      const points = [];
+
+      for (let x = -6; x <= 6; x += 0.25) {
+        points.push(new THREE.Vector3(x, 0, 0));
+      }
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+      const material = new THREE.LineBasicMaterial({
+        color: waveColors[i % waveColors.length],
+        transparent: true,
+        opacity: 0.7
+      });
+
+      const line = new THREE.Line(geometry, material);
+      line.position.y = (i - 1.5) * 0.5;
+      waveGroup.add(line);
+    }
+
     // Animation
     let t = 0;
     function animate() {
       requestAnimationFrame(animate);
 
       t += 0.01;
+
+      // sphere motion
       sphere.position.y = Math.sin(t) * 0.25;
       sphere.rotation.y += 0.002;
 
       particles.rotation.y += 0.0005;
       particles.rotation.x += 0.0002;
+
+      // wave Animation
+      waveGroup.children.forEach((line, index) => {
+        const pos = line.geometry.attributes.position;
+
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i);
+          pos.setY(i, Math.sin(x * 1.2 + t + index) * 0.3);
+        }
+
+        pos.needsUpdate = true;
+      });
       
       renderer.render(scene, camera);
     }
